@@ -113,7 +113,7 @@ namespace XNode {
         /// <summary> Position on the <see cref="NodeGraph"/> </summary>
         [SerializeField] public Vector2 position;
         /// <summary> It is recommended not to modify these at hand. Instead, see <see cref="InputAttribute"/> and <see cref="OutputAttribute"/> </summary>
-        [SerializeField] private NodePortDictionary ports = new NodePortDictionary();
+        [SerializeField] protected NodePortDictionary ports = new NodePortDictionary();
 
         /// <summary> Used during node instantiation to fix null/misconfigured graph during OnEnable/Init. Set it before instantiating a node. Will automatically be unset during OnEnable </summary>
         public static NodeGraph graphHotfix;
@@ -216,6 +216,26 @@ namespace XNode {
             if (ports.TryGetValue(fieldName, out port)) return port;
             else return null;
         }
+
+        public Node? GetNodeFromPort(string portName) {
+            NodePort? port = GetOutputPort(portName);
+
+            if (port == null)
+            {
+                Debug.LogError("port is null");
+                return null;
+            }
+
+            return GetNodeFromPort(port);
+        }
+
+        public Node? GetNodeFromPort(NodePort port) {
+            if (!port.IsConnected)
+                return null;
+
+            return port.Connection.node;
+        }
+
 
         public bool HasPort(string fieldName) {
             return ports.ContainsKey(fieldName);
@@ -406,7 +426,7 @@ namespace XNode {
 
             public void OnAfterDeserialize() {
                 this.Clear();
-#if UNITY_2021_3_OR_NEWER                
+#if UNITY_2021_3_OR_NEWER
                 this.EnsureCapacity(keys.Count);
 #endif
 
