@@ -409,7 +409,7 @@ namespace XNode {
         }
 #endregion
 
-        [Serializable] private class NodePortDictionary : Dictionary<string, NodePort>, ISerializationCallbackReceiver {
+        [Serializable] protected  class NodePortDictionary : Dictionary<string, NodePort>, ISerializationCallbackReceiver {
             [SerializeField] private List<string> keys = new List<string>();
             [SerializeField] private List<NodePort> values = new List<NodePort>();
 
