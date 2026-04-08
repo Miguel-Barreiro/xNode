@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+#if UNITY_2019_1_OR_NEWER && USE_ADVANCED_GENERIC_MENU
+using GenericMenu = XNodeEditor.AdvancedGenericMenu;
+#endif
 
 namespace XNodeEditor {
     /// <summary>Fuzzy-search popup for adding nodes to the graph. Opens at mouse position on right-click.</summary>
@@ -23,6 +26,7 @@ namespace XNodeEditor {
 
         private NodeGraphEditor graphEditor;
         private Vector2 graphPosition;
+        private Vector2 screenMousePosition;
         private Type compatibleType;
         private XNode.NodePort.IO direction;
 
@@ -53,8 +57,10 @@ namespace XNodeEditor {
                 + Mathf.Min(window.filteredEntries.Count, MaxResults) * ResultRowHeight + Padding;
             height = Mathf.Max(height, SearchFieldHeight + Padding * 3 + ResultRowHeight);
 
-            Vector2 screenMouse = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
+            Vector2 screenMouse = GUIUtility.GUIToScreenPoint(Event.current.mousePosition) + new Vector2(0, -height);
+            // Vector2 screenMouse = graphPosition;
             Rect rect = new Rect(screenMouse.x, screenMouse.y, WindowWidth, height);
+            // Rect rect = new Rect(graphPosition.x, graphPosition.y, WindowWidth, height);
 
             window.ShowAsDropDown(rect, new Vector2(WindowWidth, height));
             return window;
@@ -118,7 +124,7 @@ namespace XNodeEditor {
                 .Select(x => x.entry)
                 .ToList();
 
-            selectedIndex = Mathf.Clamp(selectedIndex, 0, Mathf.Max(0, filteredEntries.Count - 1));
+            selectedIndex = Mathf.Clamp(selectedIndex, -1, Mathf.Max(0, filteredEntries.Count - 1));
         }
 
         private static int FuzzyScore(string displayName, string fullPath, string query) {
@@ -168,13 +174,14 @@ namespace XNodeEditor {
                     Repaint();
                 }
                 if (e.keyCode == KeyCode.UpArrow) {
-                    selectedIndex = Mathf.Max(selectedIndex - 1, 0);
+                    selectedIndex = Mathf.Max(selectedIndex - 1, -1);
                     ScrollToSelected();
                     e.Use();
                     Repaint();
                 }
                 if (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter) {
-                    SelectEntry(selectedIndex);
+                    if (selectedIndex == -1) OpenTreeMenu();
+                    else SelectEntry(selectedIndex);
                     e.Use();
                     return;
                 }
@@ -204,8 +211,9 @@ namespace XNodeEditor {
 
             GUILayout.Space(Padding);
 
-            // Results list
+            // Results list (browse row is always first)
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUIStyle.none, GUI.skin.verticalScrollbar);
+            DrawBrowseRow();
             for (int i = 0; i < filteredEntries.Count; i++) {
                 DrawEntry(i, filteredEntries[i]);
             }
@@ -215,6 +223,35 @@ namespace XNodeEditor {
             EditorGUILayout.EndScrollView();
 
             GUILayout.Space(Padding);
+        }
+
+        private void DrawBrowseRow() {
+            Rect rowRect = EditorGUILayout.GetControlRect(false, ResultRowHeight);
+
+            bool isSelected = selectedIndex == -1;
+            if (isSelected)
+                EditorGUI.DrawRect(rowRect, new Color(0.2f, 0.5f, 0.9f, 0.3f));
+            else
+                EditorGUI.DrawRect(rowRect, new Color(0f, 0f, 0f, 0.05f));
+
+            if (Event.current.type == EventType.MouseDown && rowRect.Contains(Event.current.mousePosition)) {
+                OpenTreeMenu();
+                Event.current.Use();
+                return;
+            }
+            if (Event.current.type == EventType.MouseMove && rowRect.Contains(Event.current.mousePosition)) {
+                selectedIndex = -1;
+                Repaint();
+            }
+
+            Rect nameRect = new Rect(rowRect.x + Padding, rowRect.y + 3,  rowRect.width - Padding * 2, 16);
+            Rect pathRect = new Rect(rowRect.x + Padding, rowRect.y + 18, rowRect.width - Padding * 2, 14);
+
+            GUI.Label(nameRect, "Browse all nodes...", EditorStyles.boldLabel);
+
+            GUIStyle subtitleStyle = new GUIStyle(EditorStyles.miniLabel);
+            subtitleStyle.normal.textColor = new Color(0.6f, 0.6f, 0.6f);
+            GUI.Label(pathRect, "Show hierarchical tree menu", subtitleStyle);
         }
 
         private void DrawEntry(int index, NodeEntry entry) {
@@ -269,14 +306,23 @@ namespace XNodeEditor {
             if (node != null) NodeEditorWindow.current.AutoConnect(node);
         }
 
+        private void OpenTreeMenu() {
+            var menu = new GenericMenu();
+            graphEditor.AddContextMenuItems(menu, graphPosition, compatibleType, direction);
+            menu.DropDown(new Rect(screenMousePosition, Vector2.zero));
+            // OnLostFocus fires when the dropdown takes focus, closing this window automatically
+        }
+
         private void ScrollToSelected() {
+            if (selectedIndex < 0) return;
             float targetY = selectedIndex * ResultRowHeight - ResultRowHeight;
             scrollPos.y = Mathf.Clamp(scrollPos.y, targetY, targetY + ResultRowHeight);
         }
 
         private void ResizeToContent() {
             int visible = Mathf.Clamp(filteredEntries.Count, 1, MaxResults);
-            float height = SearchFieldHeight + Padding * 3 + visible * ResultRowHeight + Padding;
+            // float height = SearchFieldHeight + Padding * 3 + visible * ResultRowHeight + Padding;
+            float height = SearchFieldHeight + Padding * 3 + ResultRowHeight + visible * ResultRowHeight + Padding;
             minSize = new Vector2(WindowWidth, height);
             maxSize = new Vector2(WindowWidth, height);
         }

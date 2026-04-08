@@ -75,6 +75,11 @@ namespace XNodeEditor {
         /// <param name="direction">Direction of the compatiblity</param>
         public virtual void AddContextMenuItems(GenericMenu menu, Type compatibleType = null, XNode.NodePort.IO direction = XNode.NodePort.IO.Input) {
             Vector2 pos = NodeEditorWindow.current.WindowToGridPosition(Event.current.mousePosition);
+            AddContextMenuItems(menu, pos, compatibleType, direction);
+        }
+
+        public virtual void AddContextMenuItems(GenericMenu menu, Vector2 graphPos, Type compatibleType = null, XNode.NodePort.IO direction = XNode.NodePort.IO.Input) {
+            Vector2 pos = graphPos;
 
             Type[] nodeTypes;
 

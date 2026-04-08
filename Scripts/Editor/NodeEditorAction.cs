@@ -233,6 +233,7 @@ namespace XNodeEditor {
                                     EditorUtility.SetDirty(graph);
                                 }
                             }
+
                             // Open search window for auto-connection if there is no target node
                             else if (draggedOutputTarget == null && NodeEditorPreferences.GetSettings().dragToCreate && autoConnectOutput != null) {
                                 Vector2 graphPos = WindowToGridPosition(e.mousePosition);
@@ -296,8 +297,14 @@ namespace XNodeEditor {
                                 e.Use(); // Fixes copy/paste context menu appearing in Unity 5.6.6f2 - doesn't occur in 2018.3.2f1 Probably needs to be used in other places.
                             } else if (!IsHoveringNode) {
                                 autoConnectOutput = null;
-                                Vector2 graphPos = WindowToGridPosition(e.mousePosition);
-                                NodeSearchWindow.Open(graphEditor, graphPos);
+                                // Vector2 graphPos = WindowToGridPosition(e.mousePosition);
+                                NodeSearchWindow.Open(graphEditor, Vector2.zero);
+
+
+                                // GenericMenu menu = new GenericMenu();
+                                // graphEditor.AddContextMenuItems(menu);
+                                // menu.DropDown(new Rect(Event.current.mousePosition, Vector2.zero));
+
                             }
                         }
                         isPanning = false;
@@ -313,7 +320,12 @@ namespace XNodeEditor {
                     } else {
                         if (e.keyCode == KeyCode.F2) RenameSelectedNode();
                     }
-                    if (e.keyCode == KeyCode.A) {
+
+                    if (e.keyCode == KeyCode.Space)
+                    {
+                        Vector2 graphPos = WindowToGridPosition(e.mousePosition);
+                        NodeSearchWindow.Open(graphEditor, graphPos);
+                    } else if (e.keyCode == KeyCode.A) {
                         if (Selection.objects.Any(x => graph.nodes.Contains(x as XNode.Node))) {
                             foreach (XNode.Node node in graph.nodes) {
                                 DeselectNode(node);
