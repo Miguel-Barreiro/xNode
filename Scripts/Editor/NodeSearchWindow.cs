@@ -152,11 +152,6 @@ namespace XNodeEditor {
         }
 
         private void OnGUI() {
-            if (firstFrame) {
-                firstFrame = false;
-                EditorGUI.FocusTextInControl(SearchControlName);
-            }
-
             Event e = Event.current;
 
             // Handle keyboard navigation before drawing
@@ -190,6 +185,13 @@ namespace XNodeEditor {
             GUI.SetNextControlName(SearchControlName);
             EditorGUI.BeginChangeCheck();
             string newQuery = EditorGUILayout.TextField(searchQuery, GUILayout.Height(SearchFieldHeight));
+
+            if (firstFrame) {
+                firstFrame = false;
+                EditorGUI.FocusTextInControl(SearchControlName);
+                Repaint();
+            }
+
             if (EditorGUI.EndChangeCheck()) {
                 searchQuery = newQuery;
                 selectedIndex = 0;
