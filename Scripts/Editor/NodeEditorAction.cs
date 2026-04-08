@@ -233,11 +233,10 @@ namespace XNodeEditor {
                                     EditorUtility.SetDirty(graph);
                                 }
                             }
-                            // Open context menu for auto-connection if there is no target node
+                            // Open search window for auto-connection if there is no target node
                             else if (draggedOutputTarget == null && NodeEditorPreferences.GetSettings().dragToCreate && autoConnectOutput != null) {
-                                GenericMenu menu = new GenericMenu();
-                                graphEditor.AddContextMenuItems(menu, draggedOutput.ValueType);
-                                menu.DropDown(new Rect(Event.current.mousePosition, Vector2.zero));
+                                Vector2 graphPos = WindowToGridPosition(e.mousePosition);
+                                NodeSearchWindow.Open(graphEditor, graphPos, draggedOutput.ValueType, XNode.NodePort.IO.Input);
                             }
                             //Release dragged connection
                             draggedOutput = null;
@@ -297,9 +296,8 @@ namespace XNodeEditor {
                                 e.Use(); // Fixes copy/paste context menu appearing in Unity 5.6.6f2 - doesn't occur in 2018.3.2f1 Probably needs to be used in other places.
                             } else if (!IsHoveringNode) {
                                 autoConnectOutput = null;
-                                GenericMenu menu = new GenericMenu();
-                                graphEditor.AddContextMenuItems(menu);
-                                menu.DropDown(new Rect(Event.current.mousePosition, Vector2.zero));
+                                Vector2 graphPos = WindowToGridPosition(e.mousePosition);
+                                NodeSearchWindow.Open(graphEditor, graphPos);
                             }
                         }
                         isPanning = false;
