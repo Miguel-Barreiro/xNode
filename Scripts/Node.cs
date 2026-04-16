@@ -230,7 +230,7 @@ namespace XNode {
         }
 
         public Node? GetNodeFromPort(NodePort port) {
-            if (!port.IsConnected)
+            if (!port.IsConnected || port.Connection == null)
                 return null;
 
             return port.Connection.node;
